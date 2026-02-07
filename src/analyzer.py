@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Agora Proposal Analyzer
-LLM-powered analysis of DAO proposals for content, risk, and sentiment
+Agora Proposal Analyzer using Amazon Bedrock Claude
 """
 
 import json
-import openai
+import os
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -51,171 +50,167 @@ class ProposalAnalysis:
         }
 
 class ProposalAnalyzer:
-    """AI-powered proposal analysis engine"""
+    """Analyze DAO proposals using Amazon Bedrock Claude"""
     
-    def __init__(self, openai_api_key: Optional[str] = None):
-        if openai_api_key:
-            openai.api_key = openai_api_key
+    def __init__(self, model: str = "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0"):
+        self.model = model
         
-        self.analysis_prompt = """
-You are an expert DAO governance analyst. Analyze the following proposal and provide:
-
-1. RISK ASSESSMENT (low/medium/high/critical):
-   - Financial impact
-   - Protocol changes
-   - Security implications
-   - Community controversy
-
-2. RISK FACTORS (list specific concerns):
-   - What could go wrong?
-   - Dependencies and assumptions
-   - Potential negative outcomes
-
-3. SENTIMENT ANALYSIS (-2 to +2):
-   - Community reception
-   - Proposal tone and clarity
-   - Likely supporter/opposition dynamics
-
-4. KEY POINTS (3-5 bullet points):
-   - Main proposal objectives
-   - Critical implementation details
-   - Success metrics
-
-5. IMPACT ESTIMATION:
-   - Expected outcomes if passed
-   - Timeline and implementation complexity
-
-6. AUTOMATION RECOMMENDATION:
-   - Should this be auto-voted based on predefined rules?
-   - Or does it require human review?
-   - Confidence level in recommendation
-
-Respond in JSON format with the structure provided.
-
-Proposal to analyze:
-"""
-
-    async def analyze_proposal(self, proposal_title: str, proposal_description: str, 
-                             dao_context: Optional[str] = None) -> ProposalAnalysis:
-        """Analyze a single proposal using LLM"""
-        
+        # Try importing LiteLLM for Bedrock support
         try:
-            # Construct analysis prompt
-            full_prompt = self.analysis_prompt + f"""
-Title: {proposal_title}
-Description: {proposal_description}
-DAO Context: {dao_context or 'General DAO'}
-
-Provide analysis in this JSON structure:
-{{
-    "risk_level": "low|medium|high|critical",
-    "risk_factors": ["factor1", "factor2", ...],
-    "sentiment_score": -2|-1|0|1|2,
-    "key_points": ["point1", "point2", ...],
-    "estimated_impact": "description of expected impact",
-    "automation_recommendation": "auto_approve|auto_reject|human_review|abstain",
-    "confidence_score": 0.0-1.0
-}}
-"""
+            import litellm
+            self.litellm = litellm
             
-            # For demo purposes, return mock analysis
-            # In production, this would call the LLM API
-            mock_analysis = self._generate_mock_analysis(proposal_title, proposal_description)
+            # Set AWS region from environment
+            if not os.getenv("AWS_REGION"):
+                os.environ["AWS_REGION"] = "us-east-2"
             
-            return mock_analysis
-            
-        except Exception as e:
-            logger.error(f"Analysis failed for proposal {proposal_title}: {e}")
-            return self._fallback_analysis(proposal_title)
+            self.available = True
+            logger.info(f"✅ Bedrock analyzer ready: {model}")
+        except ImportError:
+            logger.warning("⚠️ LiteLLM not available - using heuristic analysis")
+            self.litellm = None
+            self.available = False
     
-    def _generate_mock_analysis(self, title: str, description: str) -> ProposalAnalysis:
-        """Generate mock analysis for demonstration"""
+    def analyze_proposal(self, title: str, description: str, dao_context: str = "") -> ProposalAnalysis:
+        """Analyze a DAO governance proposal"""
         
-        # Simple heuristics for demo
-        risk_level = RiskLevel.MEDIUM
-        if "treasury" in description.lower() or "fund" in description.lower():
+        if self.available and self.litellm:
+            try:
+                return self._analyze_with_ai(title, description, dao_context)
+            except Exception as e:
+                logger.warning(f"AI analysis failed, using heuristics: {e}")
+                return self._analyze_heuristic(title, description)
+        else:
+            return self._analyze_heuristic(title, description)
+    
+    def _analyze_with_ai(self, title: str, description: str, dao_context: str) -> ProposalAnalysis:
+        """AI-powered analysis using Bedrock Claude"""
+        
+        prompt = f"""Analyze this DAO governance proposal:
+
+Title: {title}
+Description: {description}
+DAO: {dao_context}
+
+Provide analysis in this exact JSON format:
+{{
+  "risk_level": "low|medium|high|critical",
+  "risk_factors": ["factor1", "factor2"],
+  "sentiment_score": -2|-1|0|1|2,
+  "key_points": ["point1", "point2", "point3"],
+  "estimated_impact": "brief impact description",
+  "automation_recommendation": "auto_approve|auto_reject|human_review",
+  "confidence_score": 0.0-1.0
+}}
+
+Risk levels:
+- low: Routine parameter changes
+- medium: Significant changes
+- high: Treasury movements, protocol changes
+- critical: Emergency/security issues
+
+Respond ONLY with valid JSON, no markdown or explanation."""
+
+        response = self.litellm.completion(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=500
+        )
+        
+        content = response.choices[0].message.content.strip()
+        
+        # Remove markdown code blocks if present
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        
+        # Parse JSON response
+        analysis_data = json.loads(content)
+        
+        return ProposalAnalysis(
+            proposal_id=title[:50],
+            risk_level=RiskLevel(analysis_data.get("risk_level", "medium")),
+            risk_factors=analysis_data.get("risk_factors", []),
+            sentiment_score=SentimentScore(analysis_data.get("sentiment_score", 0)),
+            key_points=analysis_data.get("key_points", []),
+            estimated_impact=analysis_data.get("estimated_impact", ""),
+            automation_recommendation=analysis_data.get("automation_recommendation", "human_review"),
+            confidence_score=float(analysis_data.get("confidence_score", 0.5))
+        )
+    
+    def _analyze_heuristic(self, title: str, description: str) -> ProposalAnalysis:
+        """Fallback heuristic analysis"""
+        
+        title_lower = title.lower()
+        desc_lower = description.lower()
+        
+        # Risk assessment
+        if any(word in title_lower or word in desc_lower for word in ["treasury", "fund", "million", "allocation"]):
             risk_level = RiskLevel.HIGH
-        elif "parameter" in description.lower() or "config" in description.lower():
+            risk_factors = ["Financial impact on treasury"]
+        elif any(word in title_lower or word in desc_lower for word in ["emergency", "critical", "security"]):
+            risk_level = RiskLevel.CRITICAL
+            risk_factors = ["Emergency security concern"]
+        elif any(word in title_lower or word in desc_lower for word in ["parameter", "config", "setting"]):
             risk_level = RiskLevel.LOW
+            risk_factors = ["Configuration change"]
+        else:
+            risk_level = RiskLevel.MEDIUM
+            risk_factors = ["Standard governance review required"]
         
-        sentiment = SentimentScore.NEUTRAL
-        if "improve" in description.lower() or "enhance" in description.lower():
+        # Sentiment analysis
+        positive_words = ["improve", "enhance", "benefit", "growth", "optimize"]
+        negative_words = ["problem", "fix", "emergency", "critical", "issue"]
+        
+        positive_count = sum(1 for word in positive_words if word in title_lower or word in desc_lower)
+        negative_count = sum(1 for word in negative_words if word in title_lower or word in desc_lower)
+        
+        if positive_count > negative_count:
             sentiment = SentimentScore.POSITIVE
-        elif "emergency" in description.lower() or "urgent" in description.lower():
+        elif negative_count > positive_count:
             sentiment = SentimentScore.NEGATIVE
+        else:
+            sentiment = SentimentScore.NEUTRAL
         
-        # Determine automation recommendation
-        automation_rec = "human_review"
+        # Automation recommendation
         if risk_level == RiskLevel.LOW and sentiment.value >= 0:
             automation_rec = "auto_approve"
         elif risk_level == RiskLevel.CRITICAL:
             automation_rec = "human_review"
+        else:
+            automation_rec = "human_review"
         
         return ProposalAnalysis(
-            proposal_id=title[:8],
+            proposal_id=title[:50],
             risk_level=risk_level,
-            risk_factors=[
-                "Requires community consensus",
-                "Implementation complexity unknown",
-                "Potential for unintended consequences"
-            ],
+            risk_factors=risk_factors,
             sentiment_score=sentiment,
-            key_points=[
-                f"Proposal: {title}",
-                "Requires careful evaluation",
-                "Impact assessment needed"
-            ],
-            estimated_impact="Moderate impact on DAO operations",
+            key_points=[f"Heuristic analysis: {risk_level.value} risk detected"],
+            estimated_impact="Requires detailed review",
             automation_recommendation=automation_rec,
-            confidence_score=0.75
+            confidence_score=0.65
         )
-    
-    def _fallback_analysis(self, proposal_id: str) -> ProposalAnalysis:
-        """Fallback analysis when LLM fails"""
-        return ProposalAnalysis(
-            proposal_id=proposal_id,
-            risk_level=RiskLevel.MEDIUM,
-            risk_factors=["Analysis failed - manual review required"],
-            sentiment_score=SentimentScore.NEUTRAL,
-            key_points=["Manual analysis needed"],
-            estimated_impact="Unknown - requires human review",
-            automation_recommendation="human_review",
-            confidence_score=0.0
-        )
-    
-    async def batch_analyze(self, proposals: List[Dict]) -> List[ProposalAnalysis]:
-        """Analyze multiple proposals in batch"""
-        analyses = []
-        
-        for proposal in proposals:
-            analysis = await self.analyze_proposal(
-                proposal.get("title", ""),
-                proposal.get("description", ""),
-                proposal.get("dao_name", "")
-            )
-            analyses.append(analysis)
-        
-        return analyses
 
-# Example usage
-async def main():
+# Test function
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    
     analyzer = ProposalAnalyzer()
     
-    sample_proposal = {
-        "title": "Treasury Diversification Proposal",
-        "description": "Proposal to diversify DAO treasury by allocating 20% to blue-chip tokens",
-        "dao_name": "Example DAO"
+    test_proposal = {
+        "title": "Treasury Diversification - Allocate 25% to SOL",
+        "description": "Proposal to diversify DAO treasury by allocating 25% of funds to SOL for better risk management and exposure to Solana ecosystem growth"
     }
     
-    analysis = await analyzer.analyze_proposal(
-        sample_proposal["title"],
-        sample_proposal["description"], 
-        sample_proposal["dao_name"]
+    print("🧪 Testing Bedrock Claude analysis...")
+    result = analyzer.analyze_proposal(
+        test_proposal["title"],
+        test_proposal["description"],
+        "Mango DAO"
     )
     
-    print("Analysis Result:")
-    print(json.dumps(analysis.to_dict(), indent=2))
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    print("\n📊 Analysis Result:")
+    print(json.dumps(result.to_dict(), indent=2))

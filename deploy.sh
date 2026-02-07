@@ -1,0 +1,78 @@
+#!/bin/bash
+
+echo "🚀 AGORA PRODUCTION DEPLOYMENT SCRIPT"
+echo "====================================="
+
+echo ""
+echo "🏛️ Deploying Agora - Autonomous DAO Governance Agent"
+echo "    Built for Colosseum Agent Hackathon"
+echo ""
+
+# Check if we're in the right directory
+if [ ! -f "vercel.json" ]; then
+    echo "❌ Error: vercel.json not found. Run this from the agora directory."
+    exit 1
+fi
+
+echo "✅ Project structure validated"
+echo ""
+
+echo "📋 DEPLOYMENT OPTIONS:"
+echo ""
+echo "1. 🌐 VERCEL (Recommended - Free, Fast)"
+echo "   Command: vercel"
+echo "   Result: Professional URL like agora-governance.vercel.app"
+echo ""
+echo "2. 🚇 RAILWAY (Alternative)"
+echo "   1. Connect GitHub to Railway"
+echo "   2. Deploy from main branch"
+echo "   3. Get railway.app domain"
+echo ""
+echo "3. 🔗 NETLIFY (Static Alternative)"
+echo "   1. Drag public/ folder to netlify.com/drop"
+echo "   2. Get netlify.app domain"
+echo "   3. Configure API separately"
+echo ""
+
+echo "🎯 RECOMMENDED APPROACH:"
+echo "================================"
+echo ""
+echo "1. Install Vercel CLI:"
+echo "   npm i -g vercel"
+echo ""
+echo "2. Deploy from this directory:"
+echo "   vercel"
+echo ""
+echo "3. Follow prompts:"
+echo "   - Project name: agora-dao-governance"
+echo "   - Framework: Other"
+echo "   - Build command: (leave empty)"
+echo "   - Output directory: public"
+echo ""
+echo "4. Get your public URL!"
+echo ""
+
+echo "🚀 WHAT HAPPENS AFTER DEPLOYMENT:"
+echo ""
+echo "✅ Public dashboard accessible worldwide"
+echo "✅ API endpoints available for partnerships" 
+echo "✅ Professional URL for DAO demos"
+echo "✅ Mobile-responsive governance interface"
+echo "✅ Real-time proposal monitoring showcase"
+echo ""
+
+echo "📞 UPDATE AFTER DEPLOYMENT:"
+echo ""
+echo "1. Update Colosseum project with public URL"
+echo "2. Announce in forum with live demo"
+echo "3. Share with DAO partnership contacts"
+echo "4. Enable public testing and feedback"
+echo ""
+
+echo "🏆 COMPETITIVE ADVANTAGE:"
+echo ""
+echo "Most hackathon projects show localhost demos"
+echo "Agora will have live public system that anyone can test!"
+echo ""
+echo "Ready to deploy? Run: vercel"
+echo ""

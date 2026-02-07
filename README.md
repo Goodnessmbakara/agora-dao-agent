@@ -53,14 +53,11 @@ Agora monitors, analyzes, and coordinates DAO governance autonomously:
 - [x] Multi-DAO monitoring (Mango, Jupiter, Marinade, Pyth)
 - [x] Comprehensive testing with realistic scenarios
 
-## 🚀 Live Dashboard
+## 🚀 Live Production Dashboard
 
-Experience Agora's governance automation in action:
+**Experience Agora live on the public internet:**
 
-```bash
-# Start the interactive dashboard
-python3 dashboard/server.py
-```
+### **🌐 https://comm-example-certain-mighty.trycloudflare.com**
 
 **Features:**
 - Real-time proposal monitoring
@@ -68,8 +65,16 @@ python3 dashboard/server.py
 - Automated decision tracking
 - Governance statistics and metrics
 - Activity feed with live updates
+- **✅ Secure HTTPS with Cloudflare**
+- **✅ Production-ready deployment**
+- **✅ Public API endpoints available**
 
-Visit `http://localhost:8080` to see the dashboard in action!
+**Local Development:**
+```bash
+# Start the dashboard locally
+python3 dashboard/server.py
+# Visit http://localhost:8080
+```
 
 ## 🧪 Testing
 

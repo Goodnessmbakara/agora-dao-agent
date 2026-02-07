@@ -1,0 +1,26 @@
+{
+  "name": "agora-dao-governance-agent",
+  "version": "1.0.0",
+  "description": "Autonomous DAO Governance Agent for Solana - Built for Colosseum Agent Hackathon",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Static site ready for deployment'",
+    "start": "python dashboard/server.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Goodnessmbakara/agora-dao-agent.git"
+  },
+  "keywords": [
+    "solana",
+    "dao",
+    "governance",
+    "ai", 
+    "automation",
+    "blockchain",
+    "colosseum",
+    "hackathon"
+  ],
+  "author": "lexra + Goodness Mbakara",
+  "license": "MIT"
+}

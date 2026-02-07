@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agora - Autonomous DAO Governance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #4f46e5, #7c3aed, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(79, 70, 229, 0.5);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #a5b4fc;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-change {
+            font-size: 14px;
+            color: #10b981;
+        }
+
+        .proposals-section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .proposals-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .proposal-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .proposal-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(79, 70, 229, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .proposal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .proposal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #ffffff;
+        }
+
+        .proposal-dao {
+            font-size: 14px;
+            color: #a5b4fc;
+        }
+
+        .decision-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .decision-auto-approve {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .decision-human-review {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        .decision-auto-reject {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .proposal-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .risk-low { color: #10b981; }
+        .risk-medium { color: #f59e0b; }
+        .risk-high { color: #ef4444; }
+        .risk-critical { color: #dc2626; }
+
+        .sentiment-positive { color: #10b981; }
+        .sentiment-neutral { color: #6b7280; }
+        .sentiment-negative { color: #ef4444; }
+
+        .proposal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .confidence {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .view-details {
+            padding: 8px 16px;
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .view-details:hover {
+            opacity: 0.8;
+        }
+
+        .activity-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #64748b;
+            min-width: 60px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-left: 2px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div style="font-size: 32px;">🏛️</div>
+                <div>
+                    <h1>Agora</h1>
+                    <div style="font-size: 12px; color: #94a3b8; margin-top: -4px;">Autonomous DAO Governance</div>
+                </div>
+            </div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span>Live Monitoring</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Statistics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Total Proposals</div>
+                    <div class="stat-icon" style="background: rgba(79, 70, 229, 0.2); color: #4f46e5;">📋</div>
+                </div>
+                <div class="stat-value" id="total-proposals">0</div>
+                <div class="stat-change">+4 this session</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Automated Decisions</div>
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">🤖</div>
+                </div>
+                <div class="stat-value" id="automated-decisions">0</div>
+                <div class="stat-change" id="automation-rate">0% automation rate</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">DAOs Monitored</div>
+                    <div class="stat-icon" style="background: rgba(124, 58, 237, 0.2); color: #7c3aed;">🏛️</div>
+                </div>
+                <div class="stat-value">4</div>
+                <div class="stat-change">Mango, Jupiter, Marinade, Pyth</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">High Risk Detected</div>
+                    <div class="stat-icon" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">⚠️</div>
+                </div>
+                <div class="stat-value" id="high-risk-count">0</div>
+                <div class="stat-change">Requiring human review</div>
+            </div>
+        </div>
+
+        <!-- Proposals Section -->
+        <div class="proposals-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Live Governance Analysis</h2>
+                    <p class="section-subtitle">Real-time proposal monitoring and automated decisions</p>
+                </div>
+                <button class="refresh-btn" onclick="loadProposals()">🔄 Refresh</button>
+            </div>
+            
+            <div id="proposals-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading governance data...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="proposals-section">
+            <h2 class="section-title">Recent Activity</h2>
+            <div class="stat-card">
+                <div class="activity-feed" id="activity-feed">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock data for demonstration
+        const mockProposals = [
+            {
+                id: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgHkJ",
+                title: "Treasury Diversification - Allocate 25% to SOL",
+                dao: "Mango DAO",
+                status: "Voting", 
+                riskLevel: "high",
+                sentiment: 0,
+                decision: "human-review",
+                confidence: 0.85,
+                yesVotes: 1250,
+                noVotes: 340,
+                processed: new Date(Date.now() - 1800000) // 30 min ago
+            },
+            {
+                id: "9yBrqpF1KLjH3wQX2Zm4Nr8JN6wBrCqA4vS5TgHkJmL2",
+                title: "Emergency Security Patch for Swap Router",
+                dao: "Jupiter DAO", 
+                status: "Voting",
+                riskLevel: "critical",
+                sentiment: -1,
+                decision: "human-review",
+                confidence: 0.92,
+                yesVotes: 2800,
+                noVotes: 120,
+                processed: new Date(Date.now() - 3600000) // 1 hour ago
+            },
+            {
+                id: "3mE8KnX9vL2Qw5Rp4TgHz6Jc1FyNdVbS7uAq2MpYrT8",
+                title: "Parameter Update - Increase Validator Commission Cap",
+                dao: "Marinade DAO",
+                status: "Voting",
+                riskLevel: "low", 
+                sentiment: 0,
+                decision: "auto-approve",
+                confidence: 0.78,
+                yesVotes: 890,
+                noVotes: 240,
+                processed: new Date(Date.now() - 5400000) // 1.5 hours ago
+            },
+            {
+                id: "6kR4vW2pN8Qm3xYz1JhFg9Cs5BtUa7Lp2MnXr4TyE1A",
+                title: "Community Growth Fund - Educational Initiatives", 
+                dao: "Pyth DAO",
+                status: "Voting",
+                riskLevel: "high",
+                sentiment: 1,
+                decision: "human-review", 
+                confidence: 0.81,
+                yesVotes: 1580,
+                noVotes: 420,
+                processed: new Date(Date.now() - 7200000) // 2 hours ago
+            }
+        ];
+
+        function loadProposals() {
+            const container = document.getElementById('proposals-container');
+            
+            // Show loading
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing proposals...</p>
+                </div>
+            `;
+
+            // Simulate API call delay
+            setTimeout(() => {
+                renderProposals(mockProposals);
+                updateStats(mockProposals);
+                loadActivity();
+            }, 1500);
+        }
+
+        function renderProposals(proposals) {
+            const container = document.getElementById('proposals-container');
+            
+            container.innerHTML = proposals.map(proposal => `
+                <div class="proposal-card" onclick="viewProposal('${proposal.id}')">
+                    <div class="proposal-header">
+                        <div>
+                            <h3 class="proposal-title">${proposal.title}</h3>
+                            <p class="proposal-dao">${proposal.dao}</p>
+                        </div>
+                        <div class="decision-badge decision-${proposal.decision}">
+                            ${proposal.decision.replace('-', ' ')}
+                        </div>
+                    </div>
+                    
+                    <div class="proposal-metrics">
+                        <div class="metric">
+                            <div class="metric-value risk-${proposal.riskLevel}">${proposal.riskLevel.toUpperCase()}</div>
+                            <div class="metric-label">Risk Level</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value sentiment-${getSentimentClass(proposal.sentiment)}">${proposal.sentiment > 0 ? '+' : ''}${proposal.sentiment}</div>
+                            <div class="metric-label">Sentiment</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">${Math.round(proposal.confidence * 100)}%</div>
+                            <div class="metric-label">Confidence</div>
+                        </div>
+                    </div>
+                    
+                    <div class="proposal-footer">
+                        <div>
+                            <span style="color: #10b981; font-weight: 600;">${proposal.yesVotes.toLocaleString()}</span>
+                            <span style="color: #64748b;"> YES / </span>
+                            <span style="color: #ef4444; font-weight: 600;">${proposal.noVotes.toLocaleString()}</span>
+                            <span style="color: #64748b;"> NO</span>
+                        </div>
+                        <button class="view-details">View Details</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats(proposals) {
+            document.getElementById('total-proposals').textContent = proposals.length;
+            
+            const automated = proposals.filter(p => p.decision === 'auto-approve' || p.decision === 'auto-reject').length;
+            document.getElementById('automated-decisions').textContent = automated;
+            
+            const automationRate = Math.round((automated / proposals.length) * 100);
+            document.getElementById('automation-rate').textContent = `${automationRate}% automation rate`;
+            
+            const highRisk = proposals.filter(p => p.riskLevel === 'high' || p.riskLevel === 'critical').length;
+            document.getElementById('high-risk-count').textContent = highRisk;
+        }
+
+        function loadActivity() {
+            const feed = document.getElementById('activity-feed');
+            
+            const activities = [
+                { time: '2m ago', text: '🏛️ New proposal detected in Mango DAO', type: 'new' },
+                { time: '5m ago', text: '✅ Auto-approved Marinade parameter update', type: 'approve' },
+                { time: '12m ago', text: '👤 Human review required for Jupiter security patch', type: 'review' },
+                { time: '18m ago', text: '🔍 Started monitoring Pyth DAO governance', type: 'monitor' },
+                { time: '25m ago', text: '⚠️ High risk proposal flagged in Mango DAO', type: 'alert' },
+                { time: '32m ago', text: '🚀 Agora agent started monitoring', type: 'start' }
+            ];
+
+            feed.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-time">${activity.time}</div>
+                    <div>${activity.text}</div>
+                </div>
+            `).join('');
+        }
+
+        function getSentimentClass(sentiment) {
+            if (sentiment > 0) return 'positive';
+            if (sentiment < 0) return 'negative';
+            return 'neutral';
+        }
+
+        function viewProposal(id) {
+            alert(`Opening detailed analysis for proposal: ${id.substring(0, 8)}...`);
+            // In production, would open modal or navigate to detail page
+        }
+
+        // Initialize dashboard
+        loadProposals();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadProposals, 30000);
+    </script>
+</body>
+</html>

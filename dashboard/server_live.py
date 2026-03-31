@@ -37,9 +37,7 @@ class AgoraLiveDashboardHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 AgoraLiveDashboardHandler.governance_client = SolanaGovernanceClient()
                 AgoraLiveDashboardHandler.analyzer = ProposalAnalyzer()
-                AgoraLiveDashboardHandler.engine = GovernanceEngine(
-                    analyzer=AgoraLiveDashboardHandler.analyzer
-                )
+                AgoraLiveDashboardHandler.engine = GovernanceEngine()
                 print("✅ Governance monitoring initialized")
             except Exception as e:
                 print(f"❌ Failed to initialize governance: {e}")

@@ -1,19 +1,17 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.py",
-      "use": "@vercel/python"
-    }
-  ],
+  "cleanUrls": true,
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "api/$1.py"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/public/$1"
+      "dest": "public/$1"
     }
   ],
   "functions": {

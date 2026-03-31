@@ -256,6 +256,54 @@ class SolanaGovernanceClient:
                 continue
         
         return all_proposals
+
+    def get_active_proposals(self, dao_name: str) -> List[Dict]:
+        """Synchronous wrapper for getting proposals (for dashboard)"""
+        try:
+            # We need to handle the case where we're already in a thread with no loop
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            return loop.run_until_complete(self._get_active_proposals_async(dao_name))
+        except Exception as e:
+            logger.error(f"Failed to get active proposals for {dao_name}: {e}")
+            return []
+
+    async def _get_active_proposals_async(self, dao_name: str) -> List[Dict]:
+        """Internal async version for fetching proposals for a specific DAO"""
+        # Find the realm PK for this DAO name
+        realm_pk = None
+        for pk, name in self.KNOWN_REALMS.items():
+            if dao_name.lower() in name.lower():
+                realm_pk = pk
+                break
+        
+        if not realm_pk:
+            return []
+            
+        async with self:
+            governance_accounts = await self.get_governance_accounts(realm_pk)
+            all_proposals = []
+            
+            for gov_pk in governance_accounts:
+                proposals = await self.get_proposals_for_governance(gov_pk)
+                for prop in proposals:
+                    # Fetch metadata for better display
+                    metadata = await self.get_proposal_metadata(prop.description_link)
+                    
+                    all_proposals.append({
+                        "pubkey": prop.public_key,
+                        "title": metadata.get("title", prop.name),
+                        "description": metadata.get("description", "No description available"),
+                        "status": prop.state,
+                        "yes_votes": prop.yes_votes_count,
+                        "no_votes": prop.no_votes_count
+                    })
+            
+            return all_proposals
     
     async def monitor_governance(self, callback_func=None, interval: int = 300):
         """Continuously monitor governance for new proposals"""
